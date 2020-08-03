@@ -1,0 +1,17 @@
+.Tilt {
+	background: linear-gradient(to right, rgb(79, 248, 174), rgb(39, 127, 253));
+}
+
+.Tilt-inner{
+	border: 1px solid red;
+}
+
+div.ml4  {
+	/*position: absolute;*/
+	margin-right: auto;
+	
+}
+
+#root > div > nav:nth-child(2) > div > div{
+	border: 1px solid black;
+}
