@@ -55,6 +55,15 @@ class Notes(Base):
 	def __repr__(self):
 		return f"Note - {self.note_text}"
 
+class Reminders(Base):
+	note_id = db.Column(db.Integer, db.ForeignKey('notes.id'), nullable=False)
+	note = db.relationship('Notes', backref='reminder')
+	reminder_time = db.Column(db.DateTime)
+	reminder_sent = db.Column(db.Boolean)
+
+	def __repr__(self):
+		return f"Reminder for note "
+		
 class UserSchema(ma.SQLAlchemySchema):
 	class Meta:
 		model = User
@@ -62,12 +71,12 @@ class UserSchema(ma.SQLAlchemySchema):
 	name = ma.auto_field()
 	email = ma.auto_field()
 
-class NotesSchema(ma.SQLAlchemyAutoSchema):
-	class Meta:
-		model = Notes
-
 class CategorySchema(ma.SQLAlchemyAutoSchema):
 	class Meta:
 		model = Category
 
-
+class NotesSchema(ma.SQLAlchemyAutoSchema):
+	class Meta:
+		model = Notes
+	user = ma.Nested(UserSchema)
+	category = ma.Nested(CategorySchema)

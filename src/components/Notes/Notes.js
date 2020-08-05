@@ -14,8 +14,13 @@ class Notes extends Component {
 			note_id:this.props.note_id,
 			selected:false,
 			displayId:this.props.displayId,
+			deleted:false
 			// color:props.color
 		}
+	}
+
+	setAsDelete(){
+		this.setState({deleted:true},()=>{return true});
 	}
 
 	handleChange = evt => {
@@ -28,8 +33,9 @@ class Notes extends Component {
 
 	componentWillUnmount() {
 		//Send a put/post request to the database to update/create a note
-		const {edited, isNew, text, note_id} = this.state;
-		if(isNew){
+		const {edited, isNew, text, note_id, deleted} = this.state;
+		console.log("deleted?", deleted)
+		if(isNew && (!deleted)){
 			// Post request for creation
 			fetch('/notes/create',
 			{
@@ -49,7 +55,7 @@ class Notes extends Component {
 			this.setState(this.resetState());
 			return;
 		}
-		else if(edited){
+		else if(edited && (!deleted)){
 			// Put request to update the data
 			fetch('/notes/update',
 			{
@@ -67,8 +73,6 @@ class Notes extends Component {
 			.then(data=>{console.log(data)});
 			this.setState(this.resetState());
 		}
-
-		// console.log("updating the database with the notes");
   	}
 
   	setSelected() {

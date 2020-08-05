@@ -1,12 +1,13 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from api.models import User, Category, Notes, CategorySchema, UserSchema, NotesSchema
-from api import bcrypt, db
+from api import bcrypt, db, mail
 from flask_cors import CORS
+from flask_mail import Message
+from api.utils import send_password_reset_email, send_test_email
 import uuid
 
 auth = Blueprint('auth',__name__)
 CORS(auth)
-
 
 @auth.route('/signin', methods = ['POST'])
 def signin():
@@ -21,6 +22,7 @@ def signin():
     if isAuthenticated:
        # Send the marshmallow serialized object back
        output = user_schema.dump(user)
+       output['token'] = user.get_login_token()
        return jsonify({"user":output})
     else:
        return jsonify({"error":"not a user"})
@@ -49,63 +51,6 @@ def register():
 
     return jsonify({'user' :f'{email}' }), 201
 
-@auth.route('/category_create', methods=['POST'])
-def category_create():
-    # Check if Category name already exists. Normalize the name.
-    category = request.get_json()
-    if category:
-        category_name = category.get('name')
-        category_color = category.get('color')
-        new_category = Category(category_name=category_name, category_color=category_color if category_color else None)
-        db.session.add(new_category)
-        db.session.commit()
-        return {"success":"Category added"}
-    else:
-        return {"error":"invalid input"}
-
-@auth.route('/notes/create', methods=['POST'])
-def notes_create():
-    # Check if notes name already exists. Normalize the name.
-    note = request.get_json()
-    if note:
-        note_text = note.get('text')
-        user_id = note.get('id')
-        category_id = note.get('category_id')
-        new_note = Notes(note_text=note_text, user_id=user_id, public_key=uuid.uuid4().hex, category_id=category_id)
-        db.session.add(new_note)
-        db.session.commit()
-        return {"success":"Note added"}
-    else:
-        return {"error":"invalid input"}
-
-@auth.route('/notes/update', methods=['PUT'])
-def notes_update():
-    # Check if notes name already exists. Normalize the name.
-    note = request.get_json()
-    if note:
-        note_text = note.get('text')
-        note_id = note.get('note_id')
-        theNote = Notes.query.filter_by(id=note_id).first()
-        theNote.note_text = note_text
-        db.session.commit()
-        return {"success":"Note Updated"}
-    else:
-        return {"error":"Invalid input"}
-
-@auth.route('/notes/delete', methods=['POST'])
-def notes_delete():
-    # Check if notes name already exists. Normalize the name.
-    note = request.get_json()
-    print(note)
-    if note:
-        note_id = note.get('note_id')
-        theNote = Notes.query.filter_by(id=note_id).first()
-        db.session.delete(theNote)
-        db.session.commit()
-        return {"success":"Note Deleted"}
-    else:
-        return {"error":"Invalid input"}
-
 # Admin Routes
 @auth.route('/users')
 def users():
@@ -121,12 +66,10 @@ def notes():
     output = notes_schema.dump(notes)
     return jsonify({"notes":output})
 
-@auth.route('/categories')
-def categories():
-    category = Category.query.all()
-    category_schema = CategorySchema(many=True)
-    output = category_schema.dump(category)
-    return jsonify({"categories":output})
+@auth.route('/send/email')
+def send_reminder():
+    send_test_email()
+    return {"message":"Email sent"}
 
 
 

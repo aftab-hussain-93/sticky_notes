@@ -8,43 +8,60 @@ class NotesList extends React.Component{
 
 	constructor(props){
 		super(props)
+		this.references = {};
 		this.state = {
 			all_notes:[],
-			selected_note:null,
 			selected_note_id:null,
-			search_text:''
+			search_text:'',
+			showDelete:false
 		}
+	}
+
+	getOrCreateRef(id) {
+	    if (!this.references.hasOwnProperty(id)) {
+	        this.references[id] = React.createRef();
+	    }
+	    return this.references[id];
 	}
 
 	addEmptyNote(){
 		const {all_notes} = this.state;
-		console.log(all_notes);
-		console.log({note_text: "Enter text here"})
-		console.log(uuid())
-		const note = {index:uuid(),note:{note_text: "Enter text here"}}
+		const note = {index:uuid(),isNew:true, note:{note_text: "Enter text here"}}
 
 		all_notes.push(note)
 		this.setState({all_notes:all_notes});
 	}
 
 	deleteNote(){
-		let { all_notes, selected_note, selected_note_id } = this.state
+		console.log("delete called")
+		
+		let { all_notes, selected_note_id } = this.state
 		const errMsg = document.querySelector('.errorMsg');
 		const successMsg = document.querySelector('.successMsg');
 
-		if(selected_note_id){
+		if(typeof selected_note_id !== 'undefined'){
 			// Deleting from the UI
-			const new_notes = all_notes.filter((note)=>{
-				return note.id !== selected_note_id
+			const delete_note = all_notes.filter((note)=>{
+				return note.index === selected_note_id
 			})
-			this.setState({all_notes:new_notes})
+			this.getOrCreateRef(selected_note_id).current.setAsDelete()
 
-			//Deleting from the database
+			const new_notes = all_notes.filter((note)=>{
+				return note.index !== selected_note_id
+			})
+			setTimeout(()=>{
+				this.setState({all_notes:new_notes})
+			}, 500)
+
+			if(delete_note[0].isNew){
+				return
+			}else{
+				//Deleting from the database
 			fetch("/notes/delete",{
 				method:'post',
 				headers: {'Content-Type':'application/json'},
 				body:JSON.stringify({
-					note_id:selected_note_id
+					note_id:delete_note[0].note.id
 				})
 			})
 			.then(res=>res.json())
@@ -63,24 +80,22 @@ class NotesList extends React.Component{
 				    },3000
 				);
 			})
+			}
+			
 		}
 		else
 		{
 			alert("no note selected")
 		}
-		this.setState({selected_note:null,selected_note_id:null})		
+		this.setState({selected_note_id:null})			
 	}	
-
-	generateEmptyNote(){
-		return <Notes/>
-	}
 
 	componentDidMount(){
 		fetch('http://localhost:5000/notes')
 		.then(res=>res.json())
 		.then(data=>{
 			const all_notes = data.notes.map((note, idx)=>{
-				return {index:idx, note:note}
+				return {index:idx, isNew:false, note:note}
 			})
 
 			this.setState({all_notes:all_notes})
@@ -88,8 +103,8 @@ class NotesList extends React.Component{
 	}
 
 	selectedNote(note){
-		const { note_id } = note.state;
-		this.setState({selected_note:note, selected_note_id:note_id })
+		const { displayId } = note.state;
+		this.setState({selected_note_id:displayId , showDelete:true})
 	}
 
 	getSearchText(text){
@@ -109,6 +124,7 @@ class NotesList extends React.Component{
 		let render_list = filtered_notes.map((note)=>{
 			let  isNew, note_id, key;
 			const text = note.note.note_text;
+			const displayId = note.index;
 			if(typeof note.note.id ==="undefined"){
 				key = note.index;
 				note_id = null;
@@ -119,8 +135,9 @@ class NotesList extends React.Component{
 				isNew = false;
 			}
 				return <Notes 
+				ref = {this.getOrCreateRef(displayId)}
 				selectedNote={this.selectedNote.bind(this)} 
-				displayId={key} 
+				displayId={displayId} 
 				note_id={note_id} 
 				key={key} 
 				isNew = {isNew}
@@ -134,6 +151,7 @@ class NotesList extends React.Component{
 		return (
 			<>
 				<NotesNav 
+						showDelete ={this.state.showDelete}
 						addEmptyNote={this.addEmptyNote.bind(this)}  
 						deleteNote={this.deleteNote.bind(this)}
 						getSearchText={this.getSearchText.bind(this)}/>

@@ -29,6 +29,7 @@ class App extends React.Component {
         name: null,
         email: null,
         id: null,
+        token:null
       },
     };
   }
