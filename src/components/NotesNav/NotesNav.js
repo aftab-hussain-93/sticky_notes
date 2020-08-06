@@ -97,7 +97,7 @@ const NotesNav = ({addEmptyNote, deleteNote, getSearchText, addReminder, dateTim
 				      value={startDate}
 				    />
 					<div className="f5 pointer link fw5 grow br-pill ph3 pv2 mb2 dib white bg-mid-gray dropdown" 
-							><span>Category</span>
+							onFocus={getRelatedElement}><span>Category</span>
 						<div className="f5 br-pill ba0 ma0 dropdown-content">
 							{categories}
 						</div>
