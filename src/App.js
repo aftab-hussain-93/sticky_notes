@@ -23,7 +23,7 @@ class App extends React.Component {
     super(props);
     this.state = {
       input: "",
-      route: "signin",
+      route: "home",
       isSignedIn: false,
       user: {
         name: null,
@@ -65,7 +65,8 @@ class App extends React.Component {
         />
 
         { route === "home" ? (
-            <NotesList user={isSignedIn?{name:user.name,token:user.token}:null}/>
+          <NotesList 
+            user={isSignedIn?{name:user.name,token:user.token}:null}/>
         ) : route === "signin" ? (
           <Signin loadUser={this.loadUser} 
             unLoadUser={this.unLoadUser} 

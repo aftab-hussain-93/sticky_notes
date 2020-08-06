@@ -8,18 +8,27 @@ class Notes extends Component {
 		super(props)
 		this.myRef = React.createRef();
 		this.state = {
-			text:typeof props.text ==="undefined"?"enter text here":props.text,
-			edited:false,
-			isNew:props.isNew,
-			note_id:this.props.note_id,
-			selected:false,
-			displayId:this.props.displayId,
-			deleted:false
+			text:props.text,
+			edited: null,
+			isNew: props.isNew,
+			note_id: this.props.note_id,
+			selected: false,
+			displayId: this.props.displayId,
+			deleted: false,
+			due_date:null
 			// color:props.color
 		}
 	}
 
-	setAsDelete(){
+	setReminderTime = (reminderTime) =>{
+		this.setState({due_date:reminderTime},()=>{return true});
+	}
+
+	setAsEdited = () => {
+		this.setState({edited:true},()=>{return true});
+	}
+
+	setAsDelete = () => {
 		this.setState({deleted:true},()=>{return true});
 	}
 
@@ -33,10 +42,10 @@ class Notes extends Component {
 
 	saveChanges = () => {
 	//Send a put/post request to the database to update/create a note
-	const {edited, isNew, text, note_id, deleted} = this.state;
+	const {edited, isNew, text, note_id, deleted, due_date } = this.state;
 			if(isNew && (!deleted)){
 				// Post request for creation
-				fetch('/api/notes/create',
+				fetch(`/api/notes/create?token=${this.props.token}`,
 				{
 					method:'post',
 					headers:{
@@ -45,8 +54,8 @@ class Notes extends Component {
 							},
 					body: JSON.stringify({
 						text:text,
-						id: 1,
-						category_id: 1
+						category_id: 1,
+						due_date:due_date
 					})
 				})
 				.then(res=>res.json())
@@ -56,7 +65,7 @@ class Notes extends Component {
 			}
 			else if(edited && (!deleted)){
 				// Put request to update the data
-				fetch('/api/notes/update',
+				fetch(`/api/notes/update?token=${this.props.token}`,
 				{
 					method:'put',
 					headers:{
@@ -65,7 +74,8 @@ class Notes extends Component {
 							},
 					body: JSON.stringify({
 						text:text,
-						note_id: note_id
+						note_id: note_id,
+						due_date:due_date
 				})
 				})
 				.then(res=>res.json())

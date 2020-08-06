@@ -11,27 +11,29 @@ CORS(data)
 def notes_create():
     # Check if notes name already exists. Normalize the name.
     note = request.get_json()
+    token = request.args.get('token')
+    current_user = User.verify_token(token)
     if note:
         note_text = note.get('text')
-        user_id = note.get('id')
         category_id = note.get('category_id')
         due_date = note.get('due_date',None)
         public_key = uuid.uuid4().hex
+        user_id = current_user.id
         if due_date:    
-            due_date = datetime.datetime.strptime(due_date,"%Y-%m-%d %H:%M:%S")      
+            due_date = datetime.datetime.strptime(due_date,'%Y-%m-%dT%H:%M:%S.%fZ')      
             new_note = Notes(note_text=note_text, 
-                user_id=user_id, 
+                user_id= user_id, 
                 public_key= public_key, 
                 category_id=category_id,
                 due_date=due_date)
             db.session.add(new_note)
-            db.session.commit()    
+            db.session.commit()  
             reminder = Reminders(note=new_note, reminder_time=due_date,reminder_sent=False)     
             db.session.add(new_note)
             db.session.commit()
         else:
             new_note = Notes(note_text=note_text, 
-                user_id=user_id, 
+                user_id= user_id, 
                 public_key= public_key, 
                 category_id=category_id)
             db.session.add(new_note)
@@ -39,40 +41,53 @@ def notes_create():
         cache.clear()
         return {"success":"Note added"}
     else:
-        return {"error":"invalidinput"}
+        return {"error":"Invalid Input"}
 
 @data.route('/notes/update', methods=['PUT'])
 def notes_update():
     # Check if notes name already exists. Normalize the name.
     note = request.get_json()
-    if note:
+    token = request.args.get('token')
+    current_user = User.verify_token(token)
+    try:
         note_text = note.get('text')
         note_id = note.get('note_id')
-        theNote = Notes.query.filter_by(id=note_id).first()
-        theNote.note_text = note_text
+        due_date = note.get('due_date')
+        due_date = datetime.datetime.strptime(due_date,'%Y-%m-%dT%H:%M:%S.%fZ')
+        the_note = Notes.query.filter_by(id=note_id).first()
+        if the_note.user_id != current_user.id:
+            raise Exception('credentials invalid')
+        the_note.note_text = note_text
+        the_note.due_date = due_date
         cache.clear()
         db.session.commit()
         return {"success":"Note Updated"}
-    else:
+    except Exception as e:
+        print(e)
         return {"error":"Invalid input"}
 
 @data.route('/notes/delete', methods=['POST'])
 def notes_delete():
     # Check if notes name already exists. Normalize the name.
     note = request.get_json()
-    print(note)
-    if note:
+    token = request.args.get('token')
+    current_user = User.verify_token(token)
+    print(current_user)
+    try:
         note_id = note.get('note_id')
+        the_note = Notes.query.filter_by(id=note_id).first()
+        if the_note.user_id != current_user.id:
+            raise Exception('credentials invalid')
         reminder = Reminders.query.filter_by(note_id = note_id).all()
         for rem in reminder:
             db.session.delete(rem)
         db.session.commit()
-        theNote = Notes.query.filter_by(id=note_id).first()
         cache.clear()
-        db.session.delete(theNote)
+        db.session.delete(the_note)
         db.session.commit()
         return {"success":"Note Deleted"}
-    else:
+    except Exception as e:
+        print(e)
         return {"error":"Invalid input"}
 
 @data.route('/categories')

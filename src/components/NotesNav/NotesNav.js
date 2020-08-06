@@ -1,15 +1,16 @@
 import React, {useState, useEffect} from 'react';
 import SearchBar from '../SearchBar/SearchBar';
 import DateTimePicker from 'react-datetime-picker';
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import './NotesNav.css';
 
 const useFetch = ()=>{
 	const [categories, setCategories] = useState([]);
 	const listCategories = (cat)=>{
 		const result =  cat.map((elem)=>{
-			return <p key = {elem.key} className="f5 br4 fw6 black ma0 pt1 pb1 underline-hover pointer" style={{backgroundColor:elem.color}}>{elem.name}</p>
+			return <p 
+			key = {elem.key} 
+			className="f5 br4 fw6 black ma0 pt1 pb1 underline-hover pointer" 
+			style={{backgroundColor:elem.color}}>{elem.name}</p>
 		})
 		return result
 	}	
@@ -30,36 +31,40 @@ const useFetch = ()=>{
 	 return { categories };
     };
 
-
-const NotesNav = ({addEmptyNote, deleteNote, getSearchText, showDelete}) => {
+const NotesNav = ({addEmptyNote, deleteNote, getSearchText, addReminder, dateTime }) => {
 	const [startDate, setDate] = useState(new Date());
-	const [datePickerOpen, setDateOpen] = useState(false);
 
 	const handleChange = date => {
 		setDate(date)
 	}
 
-	const openDatePicker = ()=>{
-		setDateOpen(!datePickerOpen)
-	}
-
 	const onSearchChange = (event) => {
 		getSearchText(event.target.value)
-	  };
+	}
 
-	const getRelatedElement = (e)=>{
+	const getRelatedElement = (...args)=>{
 		const errMsg = document.querySelector('.errorMsg');
-
-		if (e.relatedTarget){
-			deleteNote()
-		}else{			
-			errMsg.textContent="No note is selected";
-			setTimeout(() => {
-				        errMsg.textContent=null;
-				    },2000
-				);
+		let e, func, parameter, rest;
+		if(args.length === 2){
+			[e, func] = args
 		}
-		e.currentTarget.blur();
+		else if(args.length > 2){
+			[e, func, parameter, ...rest] = args
+		}
+		else{
+			return;
+		}
+			if (e.relatedTarget){
+				parameter?func(parameter):func()
+			}
+			else{			
+				errMsg.textContent="No note is selected";
+				setTimeout(() => {
+					        errMsg.textContent=null;
+					    },2000
+				);
+			}
+			e.currentTarget.blur();
 	}
 
 	const { categories } = useFetch();
@@ -73,23 +78,26 @@ const NotesNav = ({addEmptyNote, deleteNote, getSearchText, showDelete}) => {
 						Add Note
 					</div>
 					<div 
-						onFocus={getRelatedElement}
+						onFocus={e=>{getRelatedElement(e,deleteNote)}}
 						tabIndex="1" 
-						className="f5 link pointer br-pill fw5 grow ph3 pv2 mb2 mr3 dib white bg-mid-gray" 
+						className="delBtn f5 link pointer br-pill fw5 grow ph3 pv2 mb2 mr3 dib white bg-mid-gray" 
 						>Delete Note
 					</div>
 					<div 
-						onClick={openDatePicker}
+						onFocus={e=>{
+							getRelatedElement(e,addReminder,startDate)
+						}}
 						tabIndex="1" 
-						className="f5 link pointer br-pill fw5 grow ph3 pv2 mb2 mr3 dib white bg-mid-gray" 
+						className="remBtn f5 link pointer br-pill fw5 grow ph3 pv2 mb2 mr3 dib white bg-mid-gray" 
 						>Add Reminder
-						<DateTimePicker
-						      onChange={handleChange}
-						      value={startDate}
-						    />
 					</div>
-					<div className="f5 dropdown pointer link fw5 grow br-pill ph3 pv2 mb2 dib white bg-mid-gray" 
-						onFocus={getRelatedElement}><span>Category</span>
+					<DateTimePicker
+					  className="mr2"
+				      onChange={handleChange}
+				      value={startDate}
+				    />
+					<div className="f5 pointer link fw5 grow br-pill ph3 pv2 mb2 dib white bg-mid-gray dropdown" 
+							><span>Category</span>
 						<div className="f5 br-pill ba0 ma0 dropdown-content">
 							{categories}
 						</div>

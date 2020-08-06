@@ -9,11 +9,11 @@ class NotesList extends React.Component{
 	constructor(props){
 		super(props)
 		this.references = {};
+		this.dateTime = null;
 		this.state = {
 			all_notes:[],
 			selected_note_id:null,
 			search_text:'',
-			showDelete:false,
 			token:null
 		}
 	}
@@ -63,15 +63,46 @@ class NotesList extends React.Component{
 	}
 
 	addEmptyNote(){
+		/*
+		Called when Add Note button is clicked.
+		*/
 		const {all_notes} = this.state;
-		const note = {index:uuid(),isNew:true, note:{note_text: "Enter text here"}}
+		const note = {index:uuid(), isNew:true, note:{note_text: "Enter text here", due_date: null}}
 
 		all_notes.push(note)
 		this.setState({all_notes:all_notes});
 	}
 
-	deleteNote(){	
-		let { all_notes, selected_note_id } = this.state
+	addReminder(reminderTime){
+		let { all_notes, selected_note_id, token } = this.state
+		const errMsg = document.querySelector('.errorMsg');
+		const successMsg = document.querySelector('.successMsg');
+
+		if(typeof selected_note_id !== 'undefined'){
+			// Deleting from the UI
+			const reminder_note = all_notes.filter((note)=>{
+				return note.index === selected_note_id
+			})
+			
+			if(reminder_note[0].isNew){
+					this.getOrCreateRef(selected_note_id).current.setReminderTime(reminderTime)
+				}
+			else{
+				this.getOrCreateRef(selected_note_id).current.setAsEdited()
+				this.getOrCreateRef(selected_note_id).current.setReminderTime(reminderTime)
+			}
+		}
+		else
+		{
+			alert("no note selected")
+		}
+	}
+
+	deleteNote(){
+	/*
+	Deletes the note from UI first and then from the database if it is present in it.
+	*/	
+		let { all_notes, selected_note_id, token } = this.state
 		const errMsg = document.querySelector('.errorMsg');
 		const successMsg = document.querySelector('.successMsg');
 
@@ -93,7 +124,7 @@ class NotesList extends React.Component{
 				return
 			}else{
 			//Deleting from the database
-			fetch("/api/notes/delete",{
+			fetch(`/api/notes/delete?token=${token}`,{
 				method:'post',
 				headers: {'Content-Type':'application/json'},
 				body:JSON.stringify({
@@ -116,8 +147,7 @@ class NotesList extends React.Component{
 				    },3000
 				);
 			})
-			}
-			
+			}			
 		}
 		else
 		{
@@ -163,7 +193,8 @@ class NotesList extends React.Component{
 				note_id = note.note.id;
 				isNew = false;
 			}
-				return <Notes 
+			return <Notes 
+				token = {this.state.token}
 				ref = {this.getOrCreateRef(displayId)}
 				selectedNote={this.selectedNote.bind(this)} 
 				displayId={displayId} 
@@ -180,7 +211,8 @@ class NotesList extends React.Component{
 		return (
 			<>
 				<NotesNav 
-						showDelete ={this.state.showDelete}
+						dateTime = {this.dateTime}
+						addReminder={this.addReminder.bind(this)}
 						addEmptyNote={this.addEmptyNote.bind(this)}  
 						deleteNote={this.deleteNote.bind(this)}
 						getSearchText={this.getSearchText.bind(this)}/>
