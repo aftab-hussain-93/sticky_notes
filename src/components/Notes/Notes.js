@@ -31,49 +31,48 @@ class Notes extends Component {
 		return {edited:false, isNew:false}
 	}
 
-	componentWillUnmount() {
-		//Send a put/post request to the database to update/create a note
-		const {edited, isNew, text, note_id, deleted} = this.state;
-		console.log("deleted?", deleted)
-		if(isNew && (!deleted)){
-			// Post request for creation
-			fetch('/notes/create',
-			{
-				method:'post',
-				headers:{
-							'Content-Type':'application/json',
-							'Accept': 'application/json'
-						},
-				body: JSON.stringify({
-					text:text,
-					id: 1,
-					category_id: 1
+	saveChanges = () => {
+	//Send a put/post request to the database to update/create a note
+	const {edited, isNew, text, note_id, deleted} = this.state;
+			if(isNew && (!deleted)){
+				// Post request for creation
+				fetch('/api/notes/create',
+				{
+					method:'post',
+					headers:{
+								'Content-Type':'application/json',
+								'Accept': 'application/json'
+							},
+					body: JSON.stringify({
+						text:text,
+						id: 1,
+						category_id: 1
+					})
 				})
-			})
-			.then(res=>res.json())
-			.then(data=>{console.log(data)});
-			this.setState(this.resetState());
-			return;
+				.then(res=>res.json())
+				.then(data=>{console.log(data)});
+				this.setState(this.resetState());
+				return;
+			}
+			else if(edited && (!deleted)){
+				// Put request to update the data
+				fetch('/api/notes/update',
+				{
+					method:'put',
+					headers:{
+								'Content-Type':'application/json',
+								'Accept': 'application/json'
+							},
+					body: JSON.stringify({
+						text:text,
+						note_id: note_id
+				})
+				})
+				.then(res=>res.json())
+				.then(data=>{console.log(data)});
+				this.setState(this.resetState());
 		}
-		else if(edited && (!deleted)){
-			// Put request to update the data
-			fetch('/notes/update',
-			{
-				method:'put',
-				headers:{
-							'Content-Type':'application/json',
-							'Accept': 'application/json'
-						},
-				body: JSON.stringify({
-					text:text,
-					note_id: note_id
-			})
-			})
-			.then(res=>res.json())
-			.then(data=>{console.log(data)});
-			this.setState(this.resetState());
-		}
-  	}
+	}
 
   	setSelected() {
   		this.setState({selected:true})

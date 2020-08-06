@@ -23,7 +23,7 @@ class App extends React.Component {
     super(props);
     this.state = {
       input: "",
-      route: "home",
+      route: "signin",
       isSignedIn: false,
       user: {
         name: null,
@@ -40,19 +40,21 @@ class App extends React.Component {
   };
 
   loadUser = (user) => {
-    console.log("Loading user", user);
-    this.setState({ isSignedIn: true, user: user });
+    this.setState({ isSignedIn: true, user: user },()=>{
+      this.setState({route: "home", user: user})
+    });
   };
 
   unLoadUser = () => {
     console.log("Unloading User");
     this.setState({
-      isSignedIn: false
+      isSignedIn: false,
+      user:null
     });
   };
 
   render() {
-    const {isSignedIn, route } = this.state;
+    const {isSignedIn, route, user } = this.state;
     return (
       <div className="App">
         <Particles className="particles" params={particleOptions} />
@@ -63,12 +65,14 @@ class App extends React.Component {
         />
 
         { route === "home" ? (
-            <NotesList />
+            <NotesList user={isSignedIn?{name:user.name,token:user.token}:null}/>
         ) : route === "signin" ? (
-          <Signin loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
+          <Signin loadUser={this.loadUser} 
+            unLoadUser={this.unLoadUser} 
+            onRouteChange={this.onRouteChange} />
         ) : (
           <Register
-            loadUser={this.loadUser}
+            unLoadUser = {this.unLoadUser}
             onRouteChange={this.onRouteChange}
           />
         )}

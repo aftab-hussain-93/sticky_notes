@@ -4,7 +4,7 @@ from api import bcrypt, db, cache
 from flask_cors import CORS
 import uuid, datetime
 
-data = Blueprint('data',__name__)
+data = Blueprint('data',__name__, url_prefix="/api")
 CORS(data)
 
 @data.route('/notes/create', methods=['POST'])
@@ -63,6 +63,10 @@ def notes_delete():
     print(note)
     if note:
         note_id = note.get('note_id')
+        reminder = Reminders.query.filter_by(note_id = note_id).all()
+        for rem in reminder:
+            db.session.delete(rem)
+        db.session.commit()
         theNote = Notes.query.filter_by(id=note_id).first()
         cache.clear()
         db.session.delete(theNote)

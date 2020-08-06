@@ -1,12 +1,12 @@
 from flask import Blueprint, jsonify, request, current_app
 from api.models import User, Category, Notes, CategorySchema, UserSchema, NotesSchema
-from api import bcrypt, db, mail
+from api import bcrypt, db, mail, cache
 from flask_cors import CORS
 from flask_mail import Message
 from api.utils import send_password_reset_email, send_test_email
 import uuid
 
-auth = Blueprint('auth',__name__)
+auth = Blueprint('auth',__name__,url_prefix="/api")
 CORS(auth)
 
 @auth.route('/signin', methods = ['POST'])
@@ -23,7 +23,7 @@ def signin():
        # Send the marshmallow serialized object back
        output = user_schema.dump(user)
        output['token'] = user.get_login_token()
-       return jsonify({"user":output})
+       return jsonify(output)
     else:
        return jsonify({"error":"not a user"})
 

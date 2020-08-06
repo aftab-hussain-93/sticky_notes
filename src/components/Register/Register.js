@@ -24,6 +24,10 @@ class Register extends React.Component {
 		this.setState({signUpName:event.target.value});
 	}
 
+	componentDidMount(){
+		this.props.unLoadUser();
+	}
+
 	signUpProcess = () => {
 		const {signUpEmail, signUpPassword, signUpName} = this.state;
 		const errMsg = document.querySelector('.errorMsg');
@@ -34,7 +38,7 @@ class Register extends React.Component {
 			errMsg.textContent="Fill all Fields";
 			return;
 		}
-		fetch('/register',{
+		fetch('/api/register',{
 			method:'post',
 			headers: {'Content-Type':'application/json'},
 			body: JSON.stringify({

@@ -9,7 +9,7 @@ return (
 		{isSignedIn?
 			<p onClick={ () => {
 				unLoadUser();
-				onRouteChange('home')
+				onRouteChange('signin')
 			              }} 
 			className="f4 pointer pa0 fw6 dim no-underline white dn dib-ns mb2 ph3">Sign Out
 			</p>:<><p

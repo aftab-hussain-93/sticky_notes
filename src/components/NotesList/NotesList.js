@@ -13,15 +13,53 @@ class NotesList extends React.Component{
 			all_notes:[],
 			selected_note_id:null,
 			search_text:'',
-			showDelete:false
+			showDelete:false,
+			token:null
 		}
 	}
 
 	getOrCreateRef(id) {
+		/*
+		Making references for all notes displayed in the list
+		*/
 	    if (!this.references.hasOwnProperty(id)) {
 	        this.references[id] = React.createRef();
 	    }
 	    return this.references[id];
+	}
+
+	componentDidMount(){
+		if(this.props.user){
+			const { name, token } = this.props.user;
+			this.setState({token:token ,name:name })
+			fetch(`/api/notes/${name}?token=${token}`,{
+				method:'post'
+			})
+			.then(res=>res.json())
+			.then(data=>{
+				const all_notes = data.notes.map((note, idx)=>{
+					return {index:idx, isNew:false, note:note}
+				})
+				this.setState({all_notes:all_notes})
+				});
+		}
+	}
+
+	componentWillUnmount(){
+		if(this.props.user){
+			this.saveAllNotes()
+		}
+	}
+
+	saveAllNotes(){
+		/*
+		Save all the notes in the list
+		*/
+		const { all_notes } = this.state
+
+		all_notes.forEach((note)=>{
+			this.getOrCreateRef(note.index).current.saveChanges()
+		})
 	}
 
 	addEmptyNote(){
@@ -32,9 +70,7 @@ class NotesList extends React.Component{
 		this.setState({all_notes:all_notes});
 	}
 
-	deleteNote(){
-		console.log("delete called")
-		
+	deleteNote(){	
 		let { all_notes, selected_note_id } = this.state
 		const errMsg = document.querySelector('.errorMsg');
 		const successMsg = document.querySelector('.successMsg');
@@ -56,8 +92,8 @@ class NotesList extends React.Component{
 			if(delete_note[0].isNew){
 				return
 			}else{
-				//Deleting from the database
-			fetch("/notes/delete",{
+			//Deleting from the database
+			fetch("/api/notes/delete",{
 				method:'post',
 				headers: {'Content-Type':'application/json'},
 				body:JSON.stringify({
@@ -90,33 +126,26 @@ class NotesList extends React.Component{
 		this.setState({selected_note_id:null})			
 	}	
 
-	componentDidMount(){
-		fetch('http://localhost:5000/notes')
-		.then(res=>res.json())
-		.then(data=>{
-			const all_notes = data.notes.map((note, idx)=>{
-				return {index:idx, isNew:false, note:note}
-			})
-
-			this.setState({all_notes:all_notes})
-			});
-	}
-
 	selectedNote(note){
+		/*
+		Method to denote the selected note
+		*/
 		const { displayId } = note.state;
 		this.setState({selected_note_id:displayId , showDelete:true})
 	}
 
 	getSearchText(text){
+		/*
+		The text in the search box
+		*/
 		this.setState({search_text : text})
 	}
 
 	renderedNotes() {
-		const {all_notes, search_text} = this.state;
-		
+		const {all_notes, search_text} = this.state;		
 		const filtered_notes = all_notes.filter((note)=>      
 			{
-				return note.note.note_text
+				return note.note.note_text.replace(/<[^>]+>/g, '')
         		.toLowerCase()
         		.includes(search_text.toLowerCase().trim());
         		});

@@ -18,6 +18,10 @@ class Signin extends React.Component {
 		this.setState({signInPassword:event.target.value});
 	}
 
+	componentDidMount(){
+		this.props.unLoadUser();
+	}
+
 	signInProcess = () => {
 		const {signInUser, signInPassword} = this.state;
 		const errMsg = document.querySelector('.errorMsg');
@@ -26,7 +30,7 @@ class Signin extends React.Component {
 			errMsg.textContent="Fill all Fields";
 			return;
 		}
-		fetch('/signin',
+		fetch('/api/signin',
 		{
 			method:'post',
 			headers:{
@@ -51,7 +55,7 @@ class Signin extends React.Component {
 				return;
 			}else{
 				this.props.loadUser(data);
-				this.props.onRouteChange('home');
+				// this.props.onRouteChange('home');
 			}
 		});	
 	}
