@@ -1,0 +1,11 @@
+Dear {{ user.name }},
+
+The below task has to be completed, as you have requested on {{ notes.date_created }}:
+
+{{ note.note_text }}
+
+If you want to forward this task to another date, please click on the below link.
+
+Sincerely,
+
+Team
